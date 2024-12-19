@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// boltcoin data declaration
 const (
 	name         = "Boltcoin"
 	symbol       = "BOLC"

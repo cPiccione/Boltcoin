@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boltcoin</title>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        color: #333;
+    }
+    .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        text-align: center;
+        color: #4A90E2;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+    h2 {
+        color: #333;
+        border-bottom: 2px solid #f4f4f9;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+    button {
+        margin: 10px 0;
+        padding: 10px 20px;
+        background: #4A90E2;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s ease;
+    }
+    button:hover {
+        background: #357ABD;
+    }
+    input, textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        outline: none;
+        transition: border 0.3s ease, box-shadow 0.3s ease;
+    }
+    input:focus, textarea:focus {
+        border-color: #4A90E2;
+        box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+    }
+    textarea {
+        resize: vertical;
+        height: 150px;
+    }
+    #wallet-output, #balance-output {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 6px;
+        word-wrap: break-word;
+        font-family: monospace;
+    }
+    .container div {
+        margin-bottom: 20px;
+    }
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+        h1 {
+            font-size: 2rem;
+        }
+        h2 {
+            font-size: 1.25rem;
+        }
+        button {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Boltcoin Hub</h1>
+
+        <h2>Wallet</h2>
+        <button onclick="generateWallet()">Generate New Wallet</button>
+        <div id="wallet-output"></div>
+
+        <h2>Blockchain Operations</h2>
+        <button onclick="viewChain()">View Blockchain</button>
+        <button onclick="mineBlock()">Mine Block</button>
+        <textarea id="chain-output" placeholder="Blockchain data will appear here..."></textarea>
+
+        <h2>Transactions</h2>
+        <input id="from-wallet" placeholder="From Wallet" style="width:100%; margin-bottom:10px;">
+        <input id="to-wallet" placeholder="To Wallet" style="width:100%; margin-bottom:10px;">
+        <input id="amount" placeholder="Amount" type="number" style="width:100%; margin-bottom:10px;">
+        <button onclick="addTransaction()">Add Transaction</button>
+        <textarea id="transaction-output" placeholder="Transaction details will appear here..."></textarea>
+
+        <h2>Balance</h2>
+        <input id="balance-wallet" placeholder="Wallet Address" style="width:100%; margin-bottom:10px;">
+        <button onclick="checkBalance()">Check Balance</button>
+        <div id="balance-output"></div>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:8080';
+
+        function generateWallet() {
+            fetch(`${apiUrl}/wallet/new`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('wallet-output').textContent = `Private Key: ${data.privateKey}\nPublic Key: ${data.publicKey}`;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function viewChain() {
+            fetch(`${apiUrl}/chain`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('chain-output').value = JSON.stringify(data, null, 2);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function mineBlock() {
+            const address = prompt("Enter miner's address:");
+            if (!address) return;
+
+            fetch(`${apiUrl}/mine?address=${address}`)
+                .then(response => response.json())
+                .then(data => {
+                    alert('Block mined successfully! Check blockchain for details.');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function addTransaction() {
+            const from = document.getElementById('from-wallet').value;
+            const to = document.getElementById('to-wallet').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            const tx = {
+                from,
+                to,
+                amount,
+                signature: "", // Signature will be generated server-side
+            };
+
+            fetch(`${apiUrl}/transactions/new`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tx),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Transaction added successfully!');
+                    } else {
+                        alert('Failed to add transaction.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function checkBalance() {
+            const wallet = document.getElementById('balance-wallet').value;
+
+            fetch(`${apiUrl}/balance?wallet=${wallet}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Wallet not found');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('balance-output').textContent = `Balance: ${data[wallet]}`;
+                })
+                .catch(error => alert('Error: ' + error.message));
+        }
+    </script>
+</body>
+</html>

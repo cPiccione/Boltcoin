@@ -65,14 +65,14 @@ func enableCORS(next http.Handler) http.Handler {
 	})
 }
 
-// Utility: Generate a wallet
+// Generate a wallet
 func generateWallet() (privateKey *ecdsa.PrivateKey, publicKey string) {
 	privateKey, _ = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	publicKey = fmt.Sprintf("%x", elliptic.Marshal(elliptic.P256(), privateKey.X, privateKey.Y))
 	return
 }
 
-// Utility: Verify a transaction signature
+// Verify a transaction signature
 func verifyTransaction(tx *Transaction, publicKeyHex string) bool {
 	// Decode sender's public key from its hex representation
 	pubKeyBytes := []byte(publicKeyHex)
@@ -82,7 +82,7 @@ func verifyTransaction(tx *Transaction, publicKeyHex string) bool {
 	}
 	publicKey := &ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}
 
-	// Hash the transaction data (excluding the signature)
+	// Hash the transaction data
 	txData := tx.From + tx.To + fmt.Sprintf("%f", tx.Amount)
 	txHash := sha256.Sum256([]byte(txData))
 
@@ -100,7 +100,7 @@ func verifyTransaction(tx *Transaction, publicKeyHex string) bool {
 	return ecdsa.Verify(publicKey, txHash[:], r, s)
 }
 
-// Utility: Calculate hash of a block
+// Calculate hash of a block
 func (b *Block) calculateHash() string {
 	data, _ := json.Marshal(b.Transactions)
 	blockData := strconv.Itoa(b.Index) + b.PreviousHash + string(data) + b.Timestamp.String() + strconv.Itoa(b.Nonce)
@@ -108,7 +108,7 @@ func (b *Block) calculateHash() string {
 	return fmt.Sprintf("%x", hash)
 }
 
-// Utility: Mine a block
+// Mine a block
 func (b *Block) mineBlock(difficulty int) {
 	target := strings.Repeat("0", difficulty)
 	for !strings.HasPrefix(b.Hash, target) {
